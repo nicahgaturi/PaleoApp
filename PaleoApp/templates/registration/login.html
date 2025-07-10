@@ -1,0 +1,25 @@
+{% extends "auth_base.html" %}
+{% load static %}  <!-- THIS LINE IS MISSING -->
+{% block content %}
+<div class="shadow-wrap">
+  <div class="form-wrap">
+
+    <!-- Logo and Title -->
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="{% static 'images/museumlogo.jpeg' %}" alt="Logo" style="height: 60px; margin-bottom: 10px;">
+      <h2 style="color: #10182F;">Paleontology Catalog</h2>
+    </div>
+
+    <h3>Login</h3>
+    <form method="POST">
+      {% csrf_token %}
+      {{ form }}
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <a class="signup-link" href="{% url 'PaleoApp:signup' %}">Signup</a>
+
+  </div>
+</div>
+{% endblock %}

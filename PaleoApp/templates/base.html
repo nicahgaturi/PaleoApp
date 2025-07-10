@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Paleontology Catalog{% endblock %}</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <div class="d-flex align-items-center">
+      <button class="sidebar-toggle d-md-none" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="ms-2">Paleontology Catalog</div>
+    </div>
+    <form class="logout-form" method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit">Logout</button>
+    </form>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar">
+      <nav>
+        <a href="{% url 'PaleoApp:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="{% url 'PaleoApp:accession_table' %}"><i class="fas fa-database"></i> Accessions</a>
+        <a href="{% url 'PaleoApp:generate_accession_number' %}"><i class="fas fa-barcode"></i> Generate Accession Number</a>
+      </nav>
+    </aside>
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <footer>
+    &copy; 2025. <a href="mailto:nicahgaturi@gmail.com">nicahgaturi@gmail.com</a>. All rights reserved.
+  </footer>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('show-sidebar');
+    }
+  </script>
+</body>
+</html>
