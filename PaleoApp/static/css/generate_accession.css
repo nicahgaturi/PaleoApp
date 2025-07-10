@@ -1,0 +1,28 @@
+/* generate_accession.css */
+
+textarea[name="comment"] {
+  height: 80px !important;
+  width: 100% !important;
+  resize: vertical;
+}
+
+.card-header.bg-primary {
+  background-color: #0b2347 !important;
+}
+
+.btn-primary {
+  background-color: #0b2347 !important;
+  border-color: #0b2347 !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #091a38 !important;
+  border-color: #091a38 !important;
+  box-shadow: 0 0 8px #091a38;
+}
+
+.required-asterisk {
+  color: red;
+  margin-left: 3px;
+}

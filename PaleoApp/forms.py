@@ -41,6 +41,13 @@ class GenerateAccessionNumberForm(forms.ModelForm):
         super(GenerateAccessionNumberForm, self).__init__(*args, **kwargs)
         self.fields['collection'].queryset = Collection.objects.all()
 
+        # Make user field readonly and style as plain text
+        self.fields['user'].widget.attrs.update({
+            'readonly': True,
+            'class': 'form-control-plaintext',
+            'tabindex': '-1',  # skip tab focus on user field
+        })
+
     def clean_num_specimens(self):
         shelf_number = self.cleaned_data.get('shelf_number')
         num_specimens = self.cleaned_data.get('num_specimens')

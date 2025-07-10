@@ -4,10 +4,9 @@ from django.http import HttpResponse
 from django import forms
 from django.core.paginator import Paginator
 
-
 from PaleoApp.models import AccessionNumber, Collection, Locality, Storage
 from PaleoApp.filters import AccessionNumberFilter
-from .forms import CustomUserCreationForm  # Your custom signup form
+from .forms import CustomUserCreationForm, GenerateAccessionNumberForm
 
 import qrcode
 from io import BytesIO
@@ -35,7 +34,7 @@ def authView(request):
 # -----------------------------------------
 @login_required(login_url='login')
 def dashboard(request):
-    return render(request, "dashboard.html")  # Or "home.html" if preferred
+    return render(request, "dashboard.html")
 
 
 # -----------------------------------------
@@ -79,9 +78,9 @@ def generate_accession_number(request):
     if request.method == 'POST':
         form = GenerateAccessionNumberForm(request.POST)
         if form.is_valid():
+            user = request.user
             collection = form.cleaned_data['collection']
             locality = form.cleaned_data['locality']
-            user = request.user
             shelf_number = form.cleaned_data['shelf_number']
             num_specimens = form.cleaned_data['num_specimens']
 
@@ -103,13 +102,17 @@ def generate_accession_number(request):
                     new_number += 1
                 return redirect('PaleoApp:accession_table')
             except Exception as e:
-                logger.error(f"Failed to create accession number: {e}")
+                logger.error(f"Failed to create accession numbers: {e}")
                 return HttpResponse("Error creating accession numbers", status=500)
     else:
-        form = GenerateAccessionNumberForm()
+        form = GenerateAccessionNumberForm(initial={'user': request.user})
+
     return render(request, 'PaleoApp/generate_accession_number.html', {'form': form})
 
 
+# -----------------------------------------
+# Accession Numbers Table View with QR Codes
+# -----------------------------------------
 @login_required(login_url='login')
 def accession_table(request):
     accession_numbers = AccessionNumber.objects.all().order_by('-date_time_accessioned')
@@ -145,7 +148,9 @@ def accession_table(request):
     })
 
 
-
+# -----------------------------------------
+# Edit Shelf Number View
+# -----------------------------------------
 @login_required(login_url='login')
 def edit_shelf_number(request, accession_number_id):
     accession_number = get_object_or_404(AccessionNumber, id=accession_number_id)
