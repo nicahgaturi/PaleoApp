@@ -13,12 +13,13 @@
 </head>
 <body>
   <header>
-    <div class="d-flex align-items-center">
-      <button class="sidebar-toggle d-md-none" onclick="toggleSidebar()">
+    <div class="header-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
         <i class="fas fa-bars"></i>
       </button>
       <div class="ms-2">Paleontology Catalog</div>
     </div>
+
     <form class="logout-form" method="post" action="{% url 'logout' %}">
       {% csrf_token %}
       <button type="submit">Logout</button>

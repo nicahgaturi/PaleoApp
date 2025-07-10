@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}Dashboard - Paleontology Catalog{% endblock %}
 
 {% block content %}
+{% load static %}
+
 <div class="home-section">
   <div class="user-message">
     {% if user.is_authenticated %}
