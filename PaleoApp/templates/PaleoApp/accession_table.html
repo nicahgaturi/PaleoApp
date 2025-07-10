@@ -14,6 +14,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
+    <style>
+        .table-scroll-wrapper {
+            position: relative;
+        }
+
+        /* Removed scroll-btn styles */
+    </style>
+
     <script>
         async function exportQRCode() {
             const zip = new JSZip();
@@ -36,8 +44,11 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            // Initialize Bootstrap tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+
+            // Removed scroll button event listeners
         });
     </script>
 </head>
@@ -82,63 +93,72 @@
         <button class="btn btn-success" onclick="exportQRCode()">Export QR Codes as ZIP</button>
     </div>
 
-    <!-- Table -->
-    <table class="table table-striped">
-        <thead>
-            <tr class="table-primary">
-                <th>QR Code</th>
-                <th>Accession Number</th>
-                <th>User Name</th>
-                <th>Collection Name</th>
-                <th>Locality</th>
-                <th>Locality Abbreviation</th>
-                <th>Shelf</th>
-                <th>Date and Time Accessioned</th>
-                <th>Type Status</th>
-                <th>Comment</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for accession_number in accession_numbers %}
-                <tr>
-                    <td>
-                        <img src="data:image/png;base64,{{ accession_number.qr_code }}" alt="QR Code" width="50" height="50" />
-                    </td>
-                    <td>{{ accession_number.number }}</td>
-                    <td>{{ accession_number.user.username }}</td>
-                    <td>{{ accession_number.collection.name }}</td>
-                    <td>{{ accession_number.locality.name }}</td>
-                    <td>{{ accession_number.locality.abbreviation }}</td>
-                    <td>
-                        <a href="{% url 'PaleoApp:edit_shelf_number' accession_number.id %}"
-                           data-bs-toggle="tooltip"
-                           data-bs-placement="top"
-                           title="Click to edit the shelf number for this accession.">
-                            {% if accession_number.storage.shelf_number %}
-                                {{ accession_number.storage.shelf_number }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </a>
-                    </td>
-                    <td>{{ accession_number.date_time_accessioned }}</td>
-                    <td>{{ accession_number.type_status }}</td>
-                    <td>
-                        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#comment{{ accession_number.id }}">
-                            Comment
-                        </button>
-                    </td>
-                </tr>
-                <tr class="collapse" id="comment{{ accession_number.id }}">
-                    <td colspan="10">{{ accession_number.comment }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="10" class="text-center">No accession numbers found.</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Table without scroll buttons -->
+    <div class="table-scroll-wrapper position-relative">
+        <div class="table-responsive" id="tableScrollContainer" style="overflow-x: auto;">
+            <table class="table table-striped">
+                <thead>
+                    <tr class="table-primary">
+                        <th>QR Code</th>
+                        <th>Accession Number</th>
+                        <th>User Name</th>
+                        <th>Collection Name</th>
+                        <th>Locality</th>
+                        <th>Locality Abbreviation</th>
+                        <th>Shelf</th>
+                        <th>Date and Time Accessioned</th>
+                        <th>Type Status</th>
+                        <th>Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for accession_number in accession_numbers %}
+                        <tr>
+                            <td>
+                                <img src="data:image/png;base64,{{ accession_number.qr_code }}" alt="QR Code" width="50" height="50" />
+                            </td>
+                            <td>
+                            <span class="fw-bold{% if accession_number.color and accession_number.color != 'black' %} color-{{ accession_number.color }}{% endif %}">
+                            {{ accession_number.number }}
+                            </span>
+
+                            </td>
+                            <td>{{ accession_number.user.username }}</td>
+                            <td>{{ accession_number.collection.name }}</td>
+                            <td>{{ accession_number.locality.name }}</td>
+                            <td>{{ accession_number.locality.abbreviation }}</td>
+                            <td>
+                                <a href="{% url 'PaleoApp:edit_shelf_number' accession_number.id %}"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Click to edit the shelf number for this accession.">
+                                    {% if accession_number.storage.shelf_number %}
+                                        {{ accession_number.storage.shelf_number }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </a>
+                            </td>
+                            <td>{{ accession_number.date_time_accessioned }}</td>
+                            <td>{{ accession_number.type_status }}</td>
+                            <td>
+                                <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#comment{{ accession_number.id }}">
+                                    Comment
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="comment{{ accession_number.id }}">
+                            <td colspan="10">{{ accession_number.comment }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center">No accession numbers found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <!-- Pagination -->
     <nav aria-label="Page navigation">

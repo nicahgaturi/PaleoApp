@@ -267,3 +267,7 @@ footer a:hover {
     width: 100%;
   }
 }
+.color-green { color: green; }
+.color-blue { color: blue; }
+/* no need for color-black class */
+

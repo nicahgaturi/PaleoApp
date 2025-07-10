@@ -32,6 +32,7 @@ class AccessionNumber(models.Model):
     date_time_accessioned = models.DateTimeField(auto_now_add=True)
     locality = models.ForeignKey(Locality, on_delete=models.CASCADE)
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True)
+    color = models.CharField(max_length=20, default='black')  
 
     TYPE_STATUS_OPTIONS = (
         ('Type', 'Type'),

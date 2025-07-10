@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -88,8 +89,18 @@ def generate_accession_number(request):
             last_accession = AccessionNumber.objects.filter(collection=collection).order_by('-number').first()
             new_number = last_accession.number + 1 if last_accession else 1
 
+            # Determine next batch color
+            colors = ['green', 'black', 'blue']
+            last_colored = AccessionNumber.objects.exclude(color__isnull=True).exclude(color='').order_by('-date_time_accessioned').first()
+
+            if last_colored and last_colored.color in colors:
+                last_color_index = colors.index(last_colored.color)
+                next_color = colors[(last_color_index + 1) % len(colors)]
+            else:
+                next_color = colors[0]  # default to green
+
             try:
-                for _ in range(num_specimens):
+                for i in range(num_specimens):
                     AccessionNumber.objects.create(
                         user=user,
                         locality=locality,
@@ -97,7 +108,8 @@ def generate_accession_number(request):
                         number=new_number,
                         collection=collection,
                         type_status=form.cleaned_data.get('type_status'),
-                        comment=form.cleaned_data['comment'] if num_specimens == 1 else ''
+                        comment=form.cleaned_data['comment'] if num_specimens == 1 else '',
+                        color=next_color
                     )
                     new_number += 1
                 return redirect('PaleoApp:accession_table')
@@ -110,41 +122,40 @@ def generate_accession_number(request):
     return render(request, 'PaleoApp/generate_accession_number.html', {'form': form})
 
 
+
 # -----------------------------------------
-# Accession Numbers Table View with QR Codes
+# Accession Numbers Table View with QR Codes and batch coloring
 # -----------------------------------------
 @login_required(login_url='login')
 def accession_table(request):
-    accession_numbers = AccessionNumber.objects.all().order_by('-date_time_accessioned')
+    accession_numbers = AccessionNumber.objects.all().order_by('-date_time_accessioned', '-number')
     accession_filter = AccessionNumberFilter(request.GET, queryset=accession_numbers)
 
-    # PAGINATE — 10 per page
     paginator = Paginator(accession_filter.qs, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # Generate QR codes for visible items only
-    for accession_number in page_obj:
+    for acc in page_obj:
         qr_data = (
-            f"Number: {accession_number.number}\n"
-            f"User: {accession_number.user.username}\n"
-            f"Collection: {accession_number.collection.name}\n"
-            f"Locality: {accession_number.locality.name}\n"
-            f"Type Status: {accession_number.type_status}\n"
-            f"Comment: {accession_number.comment}\n"
-            f"Storage: {accession_number.storage.shelf_number if accession_number.storage else 'N/A'}\n"
-            f"Date Time Accessioned: {accession_number.date_time_accessioned}"
+            f"Number: {acc.number}\n"
+            f"User: {acc.user.username}\n"
+            f"Collection: {acc.collection.name}\n"
+            f"Locality: {acc.locality.name}\n"
+            f"Type Status: {acc.type_status}\n"
+            f"Comment: {acc.comment}\n"
+            f"Storage: {acc.storage.shelf_number if acc.storage else 'N/A'}\n"
+            f"Date Time Accessioned: {acc.date_time_accessioned}"
         )
         qr = qrcode.make(qr_data)
         buffer = BytesIO()
         qr.save(buffer, format='PNG')
         qr_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
-        accession_number.qr_code = qr_image
+        acc.qr_code = qr_image
 
     return render(request, 'PaleoApp/accession_table.html', {
         'page_obj': page_obj,
         'filter': accession_filter,
-        'accession_numbers': page_obj,  # Update loop to use paginated queryset
+        'accession_numbers': page_obj,
     })
 
 

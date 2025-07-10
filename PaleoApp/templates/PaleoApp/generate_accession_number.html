@@ -19,13 +19,29 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
+    // Disable the button once the form is submitted
     function disableButton() {
       document.getElementById("generateButton").disabled = true;
     }
 
+    // Enable button when the page is reloaded
     window.addEventListener('pageshow', function () {
       document.getElementById("generateButton").disabled = false;
     });
+
+    // Client-side validation to ensure num_specimens does not exceed 10
+    function validateSpecimens() {
+      const numSpecimensInput = document.getElementById("id_num_specimens");
+      const errorElement = document.getElementById("numSpecimensError");
+
+      if (numSpecimensInput.value > 10) {
+        numSpecimensInput.setCustomValidity("You cannot specify more than 10 specimens.");
+        errorElement.textContent = "You cannot specify more than 10 specimens.";
+      } else {
+        numSpecimensInput.setCustomValidity("");  // Reset the error
+        errorElement.textContent = "";
+      }
+    }
   </script>
 </head>
 
@@ -64,7 +80,17 @@
                     <span class="required-asterisk">*</span>
                   {% endif %}
                 </label>
-                {{ field|add_class:"form-control" }}
+                
+                {# Render the field as input and add validation callback for num_specimens #}
+                {% if field.name == 'num_specimens' %}
+                  <input type="number" id="{{ field.id_for_label }}" name="{{ field.name }}" 
+                         min="1" max="10" class="form-control" value="{{ field.value|default:'' }}" 
+                         oninput="validateSpecimens()">
+                  <div class="text-danger small" id="numSpecimensError"></div>
+                {% else %}
+                  {{ field|add_class:"form-control" }}
+                {% endif %}
+                
                 {% for error in field.errors %}
                   <div class="text-danger small">{{ error }}</div>
                 {% endfor %}
