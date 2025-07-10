@@ -1,0 +1,46 @@
+{% extends "auth_base.html" %}
+{% load static %}
+{% block content %}
+<div class="shadow-wrap">
+  <div class="form-wrap">
+
+    <!-- Logo and Title -->
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="{% static 'images/museumlogo.jpeg' %}" alt="Logo" style="height: 60px; margin-bottom: 10px;">
+      <h2 style="color: #10182F;">Paleontology Catalog</h2>
+    </div>
+
+    <h3>Signup</h3>
+    <form method="POST">
+      {% csrf_token %}
+      
+      <label for="{{ form.username.id_for_label }}">Username</label>
+      {{ form.username }}
+      {% if form.username.errors %}
+        <p style="color: red;">{{ form.username.errors }}</p>
+      {% endif %}
+      
+      <label for="{{ form.email.id_for_label }}">Email</label>
+      {{ form.email }}
+      {% if form.email.errors %}
+        <p style="color: red;">{{ form.email.errors }}</p>
+      {% endif %}
+
+      <label for="{{ form.password1.id_for_label }}">Password</label>
+      {{ form.password1 }}
+      {% if form.password1.errors %}
+        <p style="color: red;">{{ form.password1.errors }}</p>
+      {% endif %}
+
+      <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+      {{ form.password2 }}
+      {% if form.password2.errors %}
+        <p style="color: red;">{{ form.password2.errors }}</p>
+      {% endif %}
+
+      <button type="submit">Submit</button>
+    </form>
+    <a class="signup-link" href="{% url 'login' %}">Login</a>
+  </div>
+</div>
+{% endblock %}

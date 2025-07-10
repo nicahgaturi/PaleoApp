@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Paleontology Catalog - Auth{% endblock %}</title>
+
+  <!-- Auth CSS only -->
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  {% block content %}{% endblock %}
+</body>
+</html>
