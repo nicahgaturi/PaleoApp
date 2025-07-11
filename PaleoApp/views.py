@@ -9,6 +9,8 @@ from PaleoApp.models import AccessionNumber, Collection, Locality, Storage
 from PaleoApp.filters import AccessionNumberFilter
 from .forms import CustomUserCreationForm, GenerateAccessionNumberForm
 from PaleoApp.models import ConflictLog  
+from PaleoApp.utils import assign_range_to_collection
+
 
 import qrcode
 from io import BytesIO
@@ -75,6 +77,7 @@ class GenerateAccessionNumberForm(forms.ModelForm):
         return shelf_number if shelf_number else None
 
 
+
 @login_required(login_url='login')
 def generate_accession_number(request):
     if request.method == 'POST':
@@ -88,15 +91,35 @@ def generate_accession_number(request):
             type_status = form.cleaned_data.get('type_status')
             comment = form.cleaned_data['comment'] if num_specimens == 1 else ''
 
+            # Ensure collection has an assigned number range
+            assign_range_to_collection(collection, auto_expand=True, user=user)
+
+
             # Get or create storage
             storage, _ = Storage.objects.get_or_create(shelf_number=shelf_number)
 
-            # Get the last accession number used in this collection
+            # Get last used number for this collection
             last_accession = AccessionNumber.objects.filter(collection=collection).order_by('-number').first()
-            last_number = last_accession.number if last_accession else 0
+            last_number = last_accession.number if last_accession else collection.start_range - 1
             new_number = last_number + 1
 
-            # Check for conflicts with accession numbers in other collections
+            # Range enforcement: auto-expand if needed and re-evaluate
+            required_max_number = new_number + num_specimens - 1
+            if required_max_number > collection.end_range:
+                assign_range_to_collection(collection, auto_expand=True, user=user)
+                collection.refresh_from_db()
+
+            # Recalculate in case range was expanded
+            if required_max_number > collection.end_range:
+                form.add_error(
+                    'num_specimens',
+                    f"Only {collection.end_range - last_number} accession number(s) available in the current range "
+                    f"({collection.start_range}-{collection.end_range}). Please contact the admin to extend the range."
+                )
+                return render(request, 'PaleoApp/generate_accession_number.html', {'form': form})
+
+
+            # Optional: Global conflict check (legacy safety)
             next_global_conflict = (
                 AccessionNumber.objects
                 .filter(number__gte=new_number)
@@ -144,6 +167,7 @@ def generate_accession_number(request):
             colors = ['green', 'black', 'blue']
             last_colored = AccessionNumber.objects.exclude(color__isnull=True).exclude(color='')\
                                                   .order_by('-date_time_accessioned').first()
+            next_color = colors[0]
             if last_colored and last_colored.color in colors:
                 last_color_index = colors.index(last_colored.color)
                 next_color = colors[(last_color_index + 1) % len(colors)]
@@ -168,11 +192,11 @@ def generate_accession_number(request):
             except Exception as e:
                 logger.error(f"Failed to create accession numbers: {e}")
                 return HttpResponse("Error creating accession numbers", status=500)
-
     else:
         form = GenerateAccessionNumberForm(initial={'user': request.user})
 
     return render(request, 'PaleoApp/generate_accession_number.html', {'form': form})
+
 
 
 
@@ -227,3 +251,5 @@ def edit_shelf_number(request, accession_number_id):
         return redirect('PaleoApp:accession_table')
 
     return render(request, 'PaleoApp/edit_shelf_number.html', {'accession_number': accession_number})
+
+

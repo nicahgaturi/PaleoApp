@@ -8,6 +8,9 @@ from django.urls import reverse
 class Collection(models.Model):
     name = models.CharField(max_length=100)
     abbreviation = models.CharField(max_length=10, blank=True, null=True)
+    start_range = models.PositiveIntegerField(null=True, blank=True)
+    end_range = models.PositiveIntegerField(null=True, blank=True)
+
 
     def __str__(self):
         return self.name
