@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from PaleoApp.models import AccessionNumber, Collection, Locality, Storage
 from PaleoApp.filters import AccessionNumberFilter
 from .forms import CustomUserCreationForm, GenerateAccessionNumberForm
+from PaleoApp.models import ConflictLog  
 
 import qrcode
 from io import BytesIO
@@ -84,31 +85,82 @@ def generate_accession_number(request):
             locality = form.cleaned_data['locality']
             shelf_number = form.cleaned_data['shelf_number']
             num_specimens = form.cleaned_data['num_specimens']
+            type_status = form.cleaned_data.get('type_status')
+            comment = form.cleaned_data['comment'] if num_specimens == 1 else ''
 
+            # Get or create storage
             storage, _ = Storage.objects.get_or_create(shelf_number=shelf_number)
+
+            # Get the last accession number used in this collection
             last_accession = AccessionNumber.objects.filter(collection=collection).order_by('-number').first()
-            new_number = last_accession.number + 1 if last_accession else 1
+            last_number = last_accession.number if last_accession else 0
+            new_number = last_number + 1
 
-            # Determine next batch color
+            # Check for conflicts with accession numbers in other collections
+            next_global_conflict = (
+                AccessionNumber.objects
+                .filter(number__gte=new_number)
+                .exclude(collection=collection)
+                .order_by('number')
+                .first()
+            )
+            next_conflict_number = next_global_conflict.number if next_global_conflict else None
+
+            # Determine how many accession numbers can be assigned before a conflict
+            if next_conflict_number:
+                max_allowed = next_conflict_number - new_number
+                if num_specimens > max_allowed:
+                    conflict_collection_name = (
+                        next_global_conflict.collection.name
+                        if next_global_conflict and next_global_conflict.collection
+                        else "another collection"
+                    )
+
+                    if max_allowed == 0:
+                        # Log the conflict
+                        ConflictLog.objects.create(
+                            user=user,
+                            collection=collection,
+                            requested_specimens=num_specimens,
+                            available_specimens=0,
+                            conflict_number=next_conflict_number,
+                            conflict_collection_name=conflict_collection_name,
+                            notes="System-generated conflict log. Admin action required."
+                        )
+
+                        form.add_error('num_specimens',
+                            f"No accession numbers are available before reaching number {next_conflict_number}, "
+                            f"which belongs to the '{conflict_collection_name}' collection. "
+                            f"Please contact the admin to assign the next set of accession numbers."
+                        )
+                    else:
+                        form.add_error('num_specimens',
+                            f"Only {max_allowed} accession number(s) are available before reaching number {next_conflict_number}, "
+                            f"which belongs to the '{conflict_collection_name}' collection."
+                        )
+                    return render(request, 'PaleoApp/generate_accession_number.html', {'form': form})
+
+            # Determine batch color rotation
             colors = ['green', 'black', 'blue']
-            last_colored = AccessionNumber.objects.exclude(color__isnull=True).exclude(color='').order_by('-date_time_accessioned').first()
-
+            last_colored = AccessionNumber.objects.exclude(color__isnull=True).exclude(color='')\
+                                                  .order_by('-date_time_accessioned').first()
             if last_colored and last_colored.color in colors:
                 last_color_index = colors.index(last_colored.color)
                 next_color = colors[(last_color_index + 1) % len(colors)]
             else:
-                next_color = colors[0]  # default to green
+                next_color = colors[0]  # Default starting color
 
+            # Create accession numbers
             try:
-                for i in range(num_specimens):
+                for _ in range(num_specimens):
                     AccessionNumber.objects.create(
                         user=user,
                         locality=locality,
                         storage=storage,
                         number=new_number,
                         collection=collection,
-                        type_status=form.cleaned_data.get('type_status'),
-                        comment=form.cleaned_data['comment'] if num_specimens == 1 else '',
+                        type_status=type_status,
+                        comment=comment,
                         color=next_color
                     )
                     new_number += 1
@@ -116,6 +168,7 @@ def generate_accession_number(request):
             except Exception as e:
                 logger.error(f"Failed to create accession numbers: {e}")
                 return HttpResponse("Error creating accession numbers", status=500)
+
     else:
         form = GenerateAccessionNumberForm(initial={'user': request.user})
 

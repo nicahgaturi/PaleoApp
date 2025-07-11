@@ -3,6 +3,8 @@ from import_export.admin import ImportExportModelAdmin
 from import_export import resources
 from django.utils.safestring import mark_safe
 from .models import Collection, Locality, AccessionNumber, Storage
+from .models import ConflictLog
+
 
 class AccessionNumberResource(resources.ModelResource):
     class Meta:
@@ -54,6 +56,22 @@ class AccessionNumberAdmin(ImportExportModelAdmin):
 class StorageAdmin(ImportExportModelAdmin):
     list_display = ("shelf_number",)
     search_fields = ("shelf_number",)
+
+
+@admin.register(ConflictLog)
+class ConflictLogAdmin(admin.ModelAdmin):
+    list_display = ('collection', 'conflict_number', 'conflict_collection_name', 'requested_specimens', 'available_specimens', 'timestamp', 'resolved')
+    list_filter = ('resolved', 'timestamp')
+    search_fields = ('collection__name', 'conflict_collection_name', 'user__username')
+    actions = ['mark_as_resolved']
+
+    @admin.action(description='Mark selected conflicts as resolved')
+    def mark_as_resolved(self, request, queryset):
+        updated = queryset.update(resolved=True)
+        self.message_user(request, f"{updated} conflict(s) marked as resolved.")
+    
+
+    
 
 admin.site.register(Collection, ImportExportModelAdmin)
 admin.site.register(Locality, ImportExportModelAdmin)

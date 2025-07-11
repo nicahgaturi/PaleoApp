@@ -62,3 +62,21 @@ class AccessionNumber(models.Model):
 
     def __str__(self):
         return str(self.number)
+    
+class ConflictLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    collection = models.ForeignKey(Collection, on_delete=models.SET_NULL, null=True)
+    requested_specimens = models.PositiveIntegerField()
+    available_specimens = models.PositiveIntegerField(default=0)
+    conflict_number = models.PositiveIntegerField()
+    conflict_collection_name = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"Conflict for {self.collection} at number {self.conflict_number}"
+
