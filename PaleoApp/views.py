@@ -91,9 +91,8 @@ def generate_accession_number(request):
             type_status = form.cleaned_data.get('type_status')
             comment = form.cleaned_data['comment'] if num_specimens == 1 else ''
 
-            # Ensure collection has an assigned number range
-            assign_range_to_collection(collection, auto_expand=True, user=user)
-
+            # Ensure collection has an assigned number range (initial only)
+            assign_range_to_collection(collection)
 
             # Get or create storage
             storage, _ = Storage.objects.get_or_create(shelf_number=shelf_number)
@@ -103,13 +102,8 @@ def generate_accession_number(request):
             last_number = last_accession.number if last_accession else collection.start_range - 1
             new_number = last_number + 1
 
-            # Range enforcement: auto-expand if needed and re-evaluate
+            # Enforce range limits (no auto-expansion)
             required_max_number = new_number + num_specimens - 1
-            if required_max_number > collection.end_range:
-                assign_range_to_collection(collection, auto_expand=True, user=user)
-                collection.refresh_from_db()
-
-            # Recalculate in case range was expanded
             if required_max_number > collection.end_range:
                 form.add_error(
                     'num_specimens',
@@ -118,8 +112,7 @@ def generate_accession_number(request):
                 )
                 return render(request, 'PaleoApp/generate_accession_number.html', {'form': form})
 
-
-            # Optional: Global conflict check (legacy safety)
+            # Optional: Global conflict check
             next_global_conflict = (
                 AccessionNumber.objects
                 .filter(number__gte=new_number)
@@ -129,7 +122,6 @@ def generate_accession_number(request):
             )
             next_conflict_number = next_global_conflict.number if next_global_conflict else None
 
-            # Determine how many accession numbers can be assigned before a conflict
             if next_conflict_number:
                 max_allowed = next_conflict_number - new_number
                 if num_specimens > max_allowed:
@@ -140,7 +132,6 @@ def generate_accession_number(request):
                     )
 
                     if max_allowed == 0:
-                        # Log the conflict
                         ConflictLog.objects.create(
                             user=user,
                             collection=collection,
@@ -150,7 +141,6 @@ def generate_accession_number(request):
                             conflict_collection_name=conflict_collection_name,
                             notes="System-generated conflict log. Admin action required."
                         )
-
                         form.add_error('num_specimens',
                             f"No accession numbers are available before reaching number {next_conflict_number}, "
                             f"which belongs to the '{conflict_collection_name}' collection. "
@@ -163,7 +153,7 @@ def generate_accession_number(request):
                         )
                     return render(request, 'PaleoApp/generate_accession_number.html', {'form': form})
 
-            # Determine batch color rotation
+            # Batch color rotation
             colors = ['green', 'black', 'blue']
             last_colored = AccessionNumber.objects.exclude(color__isnull=True).exclude(color='')\
                                                   .order_by('-date_time_accessioned').first()
@@ -171,8 +161,6 @@ def generate_accession_number(request):
             if last_colored and last_colored.color in colors:
                 last_color_index = colors.index(last_colored.color)
                 next_color = colors[(last_color_index + 1) % len(colors)]
-            else:
-                next_color = colors[0]  # Default starting color
 
             # Create accession numbers
             try:
