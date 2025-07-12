@@ -4,6 +4,8 @@ from django.db import models
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.utils import timezone
+
 
 class Collection(models.Model):
     name = models.CharField(max_length=100)
@@ -82,4 +84,15 @@ class ConflictLog(models.Model):
 
     def __str__(self):
         return f"Conflict for {self.collection} at number {self.conflict_number}"
+    
+class AccessionNumberRangeLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+    start_range = models.PositiveIntegerField()
+    end_range = models.PositiveIntegerField()
+    generated_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.collection.name}: {self.start_range}–{self.end_range} (by {self.user})"
+
 

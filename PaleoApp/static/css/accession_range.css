@@ -24,6 +24,36 @@
 }
 
 .btn-primary {
+  background-color: #0b2347;
+  border-color: #0b2347;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  border-radius: 5px;/* accession_range.css */
+
+.container-accession-range {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background-color: #f9fafb;
+  border: 1px solid #0b2347;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(11, 35, 71, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container-accession-range h2 {
+  color: #010914;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.container-accession-range p strong {
+  color: #0b2347;
+  font-weight: 600;
+}
+
+.btn-primary {
   background-color: #0b2347; /* Dark blue */
   border-color: #0b2347;
   color: #ffffff; /* White text for contrast */
@@ -72,3 +102,57 @@ a.back-link:focus {
   text-decoration: underline;
   outline: none;
 }
+
+  transition: all 0.3s ease;
+  display: inline-block;
+  margin-top: 1rem;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #091a38;
+  border-color: #091a38;
+  box-shadow: 0 0 8px #091a38;
+  outline: none;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.alert-info {
+  background-color: #d9edf7;
+  color: #31708f;
+  border-radius: 5px;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+a.back-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-weight: 600;
+  color: #0b2347;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a.back-link:hover,
+a.back-link:focus {
+  color: #091a38;
+  text-decoration: underline;
+  outline: none;
+}
+.form-buttons {
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 576px) {
+    .form-buttons {
+        flex-direction: column;
+    }
+
+    .form-buttons .btn {
+        width: 100%;
+    }
+}
+

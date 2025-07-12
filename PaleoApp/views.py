@@ -3,7 +3,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django import forms
+from django.shortcuts import render
+from django.contrib.auth.models import User
+
 from django.core.paginator import Paginator
+
 
 from PaleoApp.models import AccessionNumber, Collection, Locality, Storage
 from PaleoApp.filters import AccessionNumberFilter
@@ -14,6 +18,9 @@ from django.db.models import Max
 from django.contrib import messages
 from django.urls import reverse
 from django.utils.http import urlencode
+from PaleoApp.models import AccessionNumberRangeLog
+from django.db.models import Q
+
 
 
 
@@ -302,14 +309,13 @@ def edit_shelf_number(request, accession_number_id):
 def generate_new_range(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
 
-    # Check if the current range is exhausted
+    # Check if current range is exhausted
     last_used_number = AccessionNumber.objects.filter(collection=collection).aggregate(
         Max('number'))['number__max'] or (collection.start_range - 1)
 
     is_range_full = last_used_number >= collection.end_range
 
     if request.method == 'POST' and is_range_full:
-        # Generate the next range
         block_size = 20  # adjust as needed
         last_global_end = Collection.objects.exclude(end_range__isnull=True).aggregate(
             Max('end_range'))['end_range__max'] or 0
@@ -322,9 +328,16 @@ def generate_new_range(request, collection_id):
         collection.end_range = new_end
         collection.save()
 
+        # Log the range generation with user info
+        AccessionNumberRangeLog.objects.create(
+            user=request.user,
+            collection=collection,
+            start_range=new_start,
+            end_range=new_end,
+        )
+
         messages.success(request, f"New accession number range {new_start}–{new_end} assigned to '{collection.name}'.")
 
-        # Redirect back to generate accession number page with collection preselected
         url = reverse('PaleoApp:generate_accession_number')
         query_string = urlencode({'collection': collection.id})
         return redirect(f'{url}?{query_string}')
@@ -334,6 +347,29 @@ def generate_new_range(request, collection_id):
         'is_range_full': is_range_full,
         'user': request.user
     })
+
+@login_required(login_url='login')
+def accession_number_range_log(request):
+    # Filter params
+    user_query = request.GET.get('user', '').strip()
+    collection_query = request.GET.get('collection', '').strip()
+
+    logs = AccessionNumberRangeLog.objects.select_related('user', 'collection').order_by('-generated_at')
+
+    if user_query:
+        logs = logs.filter(user__username__icontains=user_query)
+
+    if collection_query:
+        logs = logs.filter(collection__name__icontains=collection_query)
+
+    paginator = Paginator(logs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'PaleoApp/accession_number_range_log.html', {
+        'page_obj': page_obj,
+    })
+
 
 
 
