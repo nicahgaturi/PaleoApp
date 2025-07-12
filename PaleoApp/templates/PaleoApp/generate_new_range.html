@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<h2>Generate New Accession Number Range</h2>
+
+<p><strong>User:</strong> {{ user.username }}</p>
+<p><strong>Collection:</strong> {{ collection.name }}</p>
+<p><strong>Current Range:</strong> {{ collection.start_range }} – {{ collection.end_range }}</p>
+
+{% if is_range_full %}
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Generate New Range</button>
+    </form>
+{% else %}
+    <div class="alert alert-info">
+        This collection's range is not yet exhausted.
+    </div>
+{% endif %}
+
+<a href="{% url 'PaleoApp:dashboard' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+
+{% endblock %}

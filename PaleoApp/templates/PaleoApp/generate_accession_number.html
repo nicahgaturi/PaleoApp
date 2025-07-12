@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
-{% block content %}
 
+{% block content %}
 <html lang="en">
 <head>
   <title>Generate Accession Number</title>
@@ -19,17 +19,15 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Disable the button once the form is submitted
     function disableButton() {
       document.getElementById("generateButton").disabled = true;
     }
 
-    // Enable button when the page is reloaded
     window.addEventListener('pageshow', function () {
-      document.getElementById("generateButton").disabled = false;
+      const button = document.getElementById("generateButton");
+      if (button) button.disabled = false;
     });
 
-    // Client-side validation to ensure num_specimens does not exceed 10
     function validateSpecimens() {
       const numSpecimensInput = document.getElementById("id_num_specimens");
       const errorElement = document.getElementById("numSpecimensError");
@@ -38,7 +36,7 @@
         numSpecimensInput.setCustomValidity("You cannot specify more than 10 specimens.");
         errorElement.textContent = "You cannot specify more than 10 specimens.";
       } else {
-        numSpecimensInput.setCustomValidity("");  // Reset the error
+        numSpecimensInput.setCustomValidity("");
         errorElement.textContent = "";
       }
     }
@@ -52,6 +50,24 @@
         <h3 class="mb-0">Generate Accession Number</h3>
       </div>
       <div class="card-body">
+        
+        <!-- ✅ Django Messages (with HTML support) -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message|safe }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- ✅ Static fallback warning if range full -->
+        {% if is_range_full and collection_selected %}
+          <div class="alert alert-warning">
+            The accession number range for <strong>{{ collection_selected.name }}</strong> is exhausted. 
+            <a href="{% url 'PaleoApp:generate_new_range' collection_id=collection_selected.id %}" class="btn btn-warning btn-sm ms-2">
+              Click here to generate a new range.
+            </a>
+          </div>
+        {% endif %}
+
         <form method="POST" onsubmit="disableButton();">
           {% csrf_token %}
 
@@ -63,7 +79,7 @@
             </div>
           {% endif %}
 
-          {# Render user field separately as disabled and readonly #}
+          <!-- User (Read-only) -->
           <div class="mb-3">
             <label for="{{ form.user.id_for_label }}" class="form-label">{{ form.user.label }}</label>
             <input type="text" class="form-control" id="{{ form.user.id_for_label }}" 
@@ -71,6 +87,7 @@
             {{ form.user.as_hidden }}
           </div>
 
+          <!-- All other fields -->
           {% for field in form %}
             {% if field.name != 'user' %}
               <div class="mb-3">
@@ -85,7 +102,7 @@
                 {% if field.name == 'num_specimens' %}
                   <input type="number" id="{{ field.id_for_label }}" name="{{ field.name }}" 
                          min="1" max="10" class="form-control" value="{{ field.value|default:'' }}" 
-                         oninput="validateSpecimens()">
+                         oninput="validateSpecimens()" {% if is_range_full %}disabled{% endif %}>
                   <div class="text-danger small" id="numSpecimensError"></div>
                 {% else %}
                   {{ field|add_class:"form-control" }}
@@ -98,12 +115,69 @@
             {% endif %}
           {% endfor %}
 
-          <button type="submit" class="btn btn-primary" id="generateButton">Generate Accession Numbers</button>
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary" id="generateButton" {% if is_range_full %}disabled{% endif %}>
+            Generate Accession Numbers
+          </button>
+
+          <!-- Hidden input to store the URL template -->
+          <input type="hidden" id="url-template" value="{% url 'PaleoApp:generate_new_range' collection_id=0 %}">
+
+          <!-- Generate New Range Button (controlled via JS) -->
+          <a id="generateRangeBtn"
+             href="#"
+             class="btn btn-warning ms-2"
+             style="display: none;">
+             Generate New Range
+          </a>
         </form>
       </div>
     </div>
   </div>
+
+  <!-- ✅ JavaScript: dynamic range check and disable form -->
+  <script>
+    const collectionsData = JSON.parse('{{ collections_data|safe|escapejs }}');
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const collectionSelect = document.getElementById("id_collection");
+      const generateBtn = document.getElementById("generateRangeBtn");
+      const urlTemplate = document.getElementById("url-template").value;
+
+      function checkRangeFull() {
+        const selectedId = collectionSelect.value;
+        const collection = collectionsData.find(c => c.id == selectedId);
+
+        if (!collection) {
+          generateBtn.style.display = "none";
+          return;
+        }
+
+        const isFull = collection.max_used >= collection.end_range;
+        if (isFull) {
+          generateBtn.style.display = "inline-block";
+          generateBtn.href = urlTemplate.replace(/0$/, selectedId);
+
+          // Disable all form elements
+          document.querySelectorAll('form input, form select, form textarea, form button[type="submit"]').forEach(field => {
+            if (!field.disabled) field.disabled = true;
+          });
+        } else {
+          generateBtn.style.display = "none";
+
+          // Optionally re-enable form if range is okay again
+          document.querySelectorAll('form input, form select, form textarea, form button[type="submit"]').forEach(field => {
+            if (field.disabled) field.disabled = false;
+          });
+        }
+      }
+
+      if (collectionSelect) {
+        collectionSelect.addEventListener("change", checkRangeFull);
+        checkRangeFull();  // Run once on page load
+      }
+    });
+  </script>
 </body>
 </html>
-
 {% endblock %}
