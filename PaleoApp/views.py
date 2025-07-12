@@ -12,6 +12,9 @@ from PaleoApp.models import ConflictLog
 from PaleoApp.utils import assign_range_to_collection
 from django.db.models import Max
 from django.contrib import messages
+from django.urls import reverse
+from django.utils.http import urlencode
+
 
 
 
@@ -307,7 +310,7 @@ def generate_new_range(request, collection_id):
 
     if request.method == 'POST' and is_range_full:
         # Generate the next range
-        block_size = 20  # You can adjust this
+        block_size = 20  # adjust as needed
         last_global_end = Collection.objects.exclude(end_range__isnull=True).aggregate(
             Max('end_range'))['end_range__max'] or 0
 
@@ -321,7 +324,10 @@ def generate_new_range(request, collection_id):
 
         messages.success(request, f"New accession number range {new_start}–{new_end} assigned to '{collection.name}'.")
 
-        return redirect('PaleoApp:generate_new_range', collection_id=collection.id)
+        # Redirect back to generate accession number page with collection preselected
+        url = reverse('PaleoApp:generate_accession_number')
+        query_string = urlencode({'collection': collection.id})
+        return redirect(f'{url}?{query_string}')
 
     return render(request, 'PaleoApp/generate_new_range.html', {
         'collection': collection,
