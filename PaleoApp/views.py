@@ -111,28 +111,30 @@ def generate_accession_number(request):
             comment = form.cleaned_data['comment'] if num_specimens == 1 else ''
 
             assign_range_to_collection(collection)
+
             storage, _ = Storage.objects.get_or_create(shelf_number=shelf_number)
 
-            # Get last used number in collection (or start_range - 1 if none)
-            last_accession = AccessionNumber.objects.filter(collection=collection).order_by('-number').first()
-            last_number = last_accession.number if last_accession else collection.start_range - 1
+            # Get all used numbers in collection
+            used_numbers = set(
+                AccessionNumber.objects.filter(collection=collection)
+                .values_list('number', flat=True)
+            )
+            full_range = set(range(collection.start_range, collection.end_range + 1))
+            available_numbers = sorted(full_range - used_numbers)
 
-            # Compute how many accession numbers remain sequentially (no gaps) from last_number + 1 up to end_range
-            numbers_left = collection.end_range - last_number
-
-            if numbers_left <= 0:
-                # No numbers left, redirect to new range generation
+            if not available_numbers:
+                # No numbers left in range, redirect to new range generation
                 messages.warning(
                     request,
-                    f"Current accession number range ({collection.start_range}-{collection.end_range}) for '{collection.name}' is exhausted. Please generate a new range."
+                    f"The current accession number range ({collection.start_range}-{collection.end_range}) for '{collection.name}' is exhausted. Please generate a new range."
                 )
                 return redirect('PaleoApp:generate_new_range', collection_id=collection.id)
 
-            if num_specimens > numbers_left:
-                # Requested more than available numbers
+            if len(available_numbers) < num_specimens:
+                # Not enough numbers left
                 form.add_error(
                     'num_specimens',
-                    f"Only {numbers_left} accession number(s) left in current range ({collection.start_range}-{collection.end_range})."
+                    f"Only {len(available_numbers)} accession number(s) left in current range ({collection.start_range}-{collection.end_range})."
                 )
                 return render(request, 'PaleoApp/generate_accession_number.html', {
                     'form': form,
@@ -141,11 +143,48 @@ def generate_accession_number(request):
                     'collections_data': _build_collections_data()
                 })
 
-            new_number = last_number + 1
+            # Check for conflicts with other collections (global conflict)
+            new_number = available_numbers[0]
+            next_global_conflict = (
+                AccessionNumber.objects
+                .filter(number__gte=new_number)
+                .exclude(collection=collection)
+                .order_by('number')
+                .first()
+            )
+            next_conflict_number = next_global_conflict.number if next_global_conflict else None
 
-            # You can keep your existing conflict checks here, unchanged...
+            if next_conflict_number:
+                max_allowed = next_conflict_number - new_number
+                if num_specimens > max_allowed:
+                    conflict_collection_name = next_global_conflict.collection.name if next_global_conflict and next_global_conflict.collection else "another collection"
+                    if max_allowed == 0:
+                        ConflictLog.objects.create(
+                            user=user,
+                            collection=collection,
+                            requested_specimens=num_specimens,
+                            available_specimens=0,
+                            conflict_number=next_conflict_number,
+                            conflict_collection_name=conflict_collection_name,
+                            notes="System-generated conflict log. Admin action required."
+                        )
+                        form.add_error(
+                            'num_specimens',
+                            f"No accession numbers available before {next_conflict_number} (owned by '{conflict_collection_name}'). Contact admin."
+                        )
+                    else:
+                        form.add_error(
+                            'num_specimens',
+                            f"Only {max_allowed} accession number(s) available before number {next_conflict_number} (owned by '{conflict_collection_name}')."
+                        )
+                    return render(request, 'PaleoApp/generate_accession_number.html', {
+                        'form': form,
+                        'is_range_full': False,
+                        'collection_selected': collection_selected,
+                        'collections_data': _build_collections_data()
+                    })
 
-            # Cycle colors as before
+            # Cycle color for new accession numbers
             colors = ['green', 'black', 'blue']
             last_colored = AccessionNumber.objects.exclude(color__isnull=True).exclude(color='')\
                                                   .order_by('-date_time_accessioned').first()
@@ -154,7 +193,7 @@ def generate_accession_number(request):
                 last_color_index = colors.index(last_colored.color)
                 next_color = colors[(last_color_index + 1) % len(colors)]
 
-            # Create accession numbers sequentially
+            # Create accession numbers from the lowest available numbers (gaps-first)
             try:
                 for number in available_numbers[:num_specimens]:
                     AccessionNumber.objects.create(
@@ -195,36 +234,6 @@ def generate_accession_number(request):
         'collection_selected': collection_selected,
         'collections_data': collections_data,
     })
-
-
-def _build_collections_data():
-    """Helper to build collection data for JS usage."""
-    collections = []
-    for collection in Collection.objects.all():
-        # Skip or handle collections with no assigned range
-        if collection.start_range is None or collection.end_range is None:
-            collections.append({
-                'id': collection.id,
-                'name': collection.name,
-                'start_range': None,
-                'end_range': None,
-                'max_used': None
-            })
-        else:
-            max_number = (
-                AccessionNumber.objects
-                .filter(collection=collection)
-                .aggregate(Max('number'))['number__max']
-            ) or (collection.start_range - 1)
-
-            collections.append({
-                'id': collection.id,
-                'name': collection.name,
-                'start_range': collection.start_range,
-                'end_range': collection.end_range,
-                'max_used': max_number
-            })
-    return collections
 
 
 
