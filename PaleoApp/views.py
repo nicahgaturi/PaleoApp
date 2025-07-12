@@ -79,6 +79,17 @@ class GenerateAccessionNumberForm(forms.ModelForm):
         shelf_number = self.cleaned_data.get('shelf_number')
         return shelf_number if shelf_number else None
 
+# Helper function for collections data
+def _build_collections_data():
+    collections = []
+    for collection in Collection.objects.all():
+        collections.append({
+            'id': collection.id,
+            'name': collection.name,
+            'start_range': collection.start_range,
+            'end_range': collection.end_range,
+        })
+    return collections
 
 
 @login_required(login_url='login')
@@ -145,18 +156,17 @@ def generate_accession_number(request):
 
             # Create accession numbers sequentially
             try:
-                for _ in range(num_specimens):
+                for number in available_numbers[:num_specimens]:
                     AccessionNumber.objects.create(
                         user=user,
                         locality=locality,
                         storage=storage,
-                        number=new_number,
+                        number=number,
                         collection=collection,
                         type_status=type_status,
                         comment=comment,
                         color=next_color
                     )
-                    new_number += 1
                 return redirect('PaleoApp:accession_table')
             except Exception as e:
                 logger.error(f"Failed to create accession numbers: {e}")
