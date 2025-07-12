@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
+<div class="container-accession-range">
+  <h2>Generate New Accession Number Range</h2>
 
-<h2>Generate New Accession Number Range</h2>
+  <p><strong>User:</strong> {{ user.username }}</p>
+  <p><strong>Collection:</strong> {{ collection.name }}</p>
+  <p><strong>Current Range:</strong> {{ collection.start_range }} – {{ collection.end_range }}</p>
 
-<p><strong>User:</strong> {{ user.username }}</p>
-<p><strong>Collection:</strong> {{ collection.name }}</p>
-<p><strong>Current Range:</strong> {{ collection.start_range }} – {{ collection.end_range }}</p>
+  {% if is_range_full %}
+      <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">Generate New Range</button>
+      </form>
+  {% else %}
+      <div class="alert alert-info">
+          This collection's range is not yet exhausted.
+      </div>
+  {% endif %}
 
-{% if is_range_full %}
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary">Generate New Range</button>
-    </form>
-{% else %}
-    <div class="alert alert-info">
-        This collection's range is not yet exhausted.
-    </div>
-{% endif %}
-
-<a href="{% url 'PaleoApp:generate_accession_number' %}">back to Generate Accession Number</a>
-
+  <a href="{% url 'PaleoApp:generate_accession_number' %}" class="back-link">&larr; Back to Generate Accession Number</a>
+</div>
 {% endblock %}
