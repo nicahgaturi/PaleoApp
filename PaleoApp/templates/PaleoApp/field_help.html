@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">Field Help: {{ field_name|capfirst }}</h4>
+    </div>
+    <div class="card-body">
+      <p>{{ help_text }}</p>
+      <a href="{% url 'PaleoApp:generate_accession_number' %}" class="btn btn-outline-primary mt-3">Back to Form</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

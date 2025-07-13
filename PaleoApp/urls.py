@@ -17,5 +17,9 @@ urlpatterns = [
     path("edit-shelf-number/<int:accession_number_id>/", views.edit_shelf_number, name="edit_shelf_number"),
     path('collection/<int:collection_id>/generate-range/', views.generate_new_range, name='generate_new_range'),
     path('accession-range-log/', views.accession_number_range_log, name='accession_number_range_log'),
+    path('help/<str:field_name>/', views.help_page, name='field_help'),
+    path('field-help/', views.glossary_page, name='field_help_glossary'),
+
+
 
 ]

@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django import forms
 from django.shortcuts import render
 from django.contrib.auth.models import User
-
+from .helpers import HELP_TEXTS  
 from django.core.paginator import Paginator
 
 
@@ -370,6 +370,18 @@ def accession_number_range_log(request):
         'page_obj': page_obj,
     })
 
+@login_required(login_url='login')
+def help_page(request, field_name):
+    return render(request, 'PaleoApp/field_help.html', {
+        'field_name': field_name,
+        'help_text': HELP_TEXTS.get(field_name, 'No help available for this field.'),
+    })
+
+@login_required(login_url='login')
+def glossary_page(request):
+    return render(request, 'PaleoApp/glossary.html', {
+        'help_texts': HELP_TEXTS,
+    })
 
 
 

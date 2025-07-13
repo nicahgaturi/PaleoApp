@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card">
+    <div class="card-header bg-success text-white">
+      <h4 class="mb-0">Glossary of Accession Form Fields</h4>
+    </div>
+    <div class="card-body">
+      <ul class="list-group">
+        {% for field, text in help_texts.items %}
+          <li class="list-group-item">
+            <strong>{{ field|capfirst }}:</strong> {{ text }}
+          </li>
+        {% endfor %}
+      </ul>
+      <a href="{% url 'PaleoApp:generate_accession_number' %}" class="btn btn-outline-secondary mt-4">Back to Form</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

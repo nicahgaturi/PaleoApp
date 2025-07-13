@@ -271,3 +271,11 @@ footer a:hover {
 .color-blue { color: blue; }
 /* no need for color-black class */
 
+.bi-question-circle-fill {
+  cursor: pointer;
+}
+
+.bi-question-circle-fill:hover {
+  color: #0b2347;
+}
+
