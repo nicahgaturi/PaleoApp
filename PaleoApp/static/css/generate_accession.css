@@ -26,3 +26,17 @@ textarea[name="comment"] {
   color: red;
   margin-left: 3px;
 }
+
+.alert-warning {
+  border-left: 5px solid #ffc107; /* Bootstrap warning yellow */
+}
+
+.alert-warning h5 {
+  font-weight: 600;
+}
+
+.required-asterisk {
+  color: red;
+  margin-left: 2px;
+}
+

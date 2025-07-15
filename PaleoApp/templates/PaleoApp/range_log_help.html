@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow">
+    <div class="card-header bg-info text-white">
+      <h4><i class="bi bi-journal-text"></i> Accession Number Range Log – Help</h4>
+    </div>
+    <div class="card-body">
+      
+      <h5 class="mb-3">📘 Overview</h5>
+      <p>{{ summary }}</p>
+
+      <h5 class="mt-4 mb-2">🔧 Why This Log Matters</h5>
+      <ul>
+        {% for item in uses %}
+          <li>{{ item|safe }}</li>
+        {% endfor %}
+      </ul>
+
+      <hr>
+
+      <h5 class="mt-4 mb-3">📊 Table Field Descriptions</h5>
+      <ul class="list-group list-group-flush">
+        {% for label, text in fields.items %}
+          <li class="list-group-item"><strong>{{ label }}:</strong> {{ text }}</li>
+        {% endfor %}
+      </ul>
+
+      <a href="{% url 'PaleoApp:accession_number_range_log' %}" class="btn btn-outline-secondary mt-4">
+        <i class="bi bi-arrow-left-circle"></i> Back to Log
+      </a>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

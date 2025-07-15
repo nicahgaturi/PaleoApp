@@ -26,6 +26,13 @@
 <body>
 <div class="container mt-4">
     <h2>Accession Number Range Log</h2>
+    <a href="{% url 'PaleoApp:range_log_help' %}" class="btn btn-outline-info mb-3" target="_blank">
+    <i class="bi bi-info-circle"></i> About This Log
+    </a>
+        <div class="card-body">
+      <a href="{% url 'PaleoApp:generate_new_range' collection_id=page_obj.0.collection.id %}" class="btn btn-outline-primary mt-3">Generate New Range</a>
+    </div>
+
 
     <!-- Filter Toggle Button -->
     <div class="d-flex justify-content-end mb-2">

@@ -6,6 +6,7 @@ from django import forms
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from .helpers import HELP_TEXTS  
+from PaleoApp.helpers import RANGE_LOG_HELP_TEXT
 from django.core.paginator import Paginator
 
 
@@ -141,17 +142,26 @@ def generate_accession_number(request):
                 return redirect('PaleoApp:generate_new_range', collection_id=collection.id)
 
             if len(available_numbers) < num_specimens:
-                # Not enough numbers left
+                remaining = len(available_numbers)
+                requested = num_specimens
+                remaining_to_generate = requested - remaining  # <-- calculate difference here
+
                 form.add_error(
                     'num_specimens',
-                    f"Only {len(available_numbers)} accession number(s) left in current range ({collection.start_range}-{collection.end_range})."
+                    f"Only {remaining} accession number(s) left in current range ({collection.start_range}-{collection.end_range})."
                 )
                 return render(request, 'PaleoApp/generate_accession_number.html', {
                     'form': form,
                     'is_range_full': False,
                     'collection_selected': collection_selected,
-                    'collections_data': _build_collections_data()
+                    'collections_data': _build_collections_data(),
+                    'warning_low_range': True,
+                    'remaining_numbers': remaining,
+                    'requested_numbers': requested,
+                    'remaining_to_generate': remaining_to_generate,   # <-- pass this!
                 })
+
+
 
             # Check for conflicts with other collections (global conflict)
             new_number = available_numbers[0]
@@ -384,4 +394,11 @@ def glossary_page(request):
     })
 
 
+@login_required(login_url='login')
+def range_log_help(request):
+    return render(request, 'PaleoApp/range_log_help.html', {
+        'summary': RANGE_LOG_HELP_TEXT['summary'],
+        'uses': RANGE_LOG_HELP_TEXT['uses'],
+        'fields': RANGE_LOG_HELP_TEXT['fields'],
+    })
 

@@ -19,6 +19,8 @@ urlpatterns = [
     path('accession-range-log/', views.accession_number_range_log, name='accession_number_range_log'),
     path('help/<str:field_name>/', views.help_page, name='field_help'),
     path('field-help/', views.glossary_page, name='field_help_glossary'),
+    path('range-log/help/', views.range_log_help, name='range_log_help'),
+
 
 
 
