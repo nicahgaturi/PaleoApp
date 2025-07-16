@@ -16,6 +16,8 @@ bash
 
 python3 --version
 pip3 --version
+
+
 📥 2. Clone the Repository
 Clone the project from GitHub:
 
@@ -23,14 +25,17 @@ bash
 
 git clone https://github.com/nicahgaturi/PaleoApp.git
 cd PaleoApp
+
+
 🧱 3. Create and Activate a Virtual Environment
-This keeps your dependencies isolated:
 
 bash
 
 
 python3 -m venv venv
 source venv/bin/activate
+
+
 📦 4. Install Required Python Packages
 Install dependencies listed in requirements.txt:
 
@@ -44,6 +49,9 @@ bash
 
 
 pip install django
+
+
+
 ✅ 5. Apply Database Migrations
 Set up the initial database schema:
 
@@ -51,11 +59,15 @@ bash
 
 
 python manage.py migrate
+
+
 🔐 6. Create an Admin (Superuser) Account
 bash
 
 python manage.py createsuperuser
 Enter your desired username, email, and password when prompted.
+
+
 
 🖥 7. Start the Development Server
 bash
