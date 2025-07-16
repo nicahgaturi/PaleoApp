@@ -98,5 +98,5 @@ class ConflictLogAdmin(admin.ModelAdmin):
 admin.site.register(AccessionNumberRangeLog, AccessionNumberRangeLogAdmin)
 admin.site.register(Collection, ImportExportModelAdmin)
 admin.site.register(Locality, ImportExportModelAdmin)
-admin.site.register(Storage, StorageAdmin)  # Register Storage
+admin.site.register(Storage, StorageAdmin)  
 admin.site.register(AccessionNumber, AccessionNumberAdmin)

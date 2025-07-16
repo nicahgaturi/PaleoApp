@@ -19,7 +19,7 @@
             position: relative;
         }
 
-        /* Removed scroll-btn styles */
+    
     </style>
 
     <script>
@@ -48,7 +48,7 @@
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
 
-            // Removed scroll button event listeners
+            
         });
     </script>
 </head>
@@ -100,7 +100,7 @@
         <button class="btn btn-success" onclick="exportQRCode()">Export QR Codes as ZIP</button>
     </div>
 
-    <!-- Table without scroll buttons -->
+    <!-- Table -->
     <div class="table-scroll-wrapper position-relative">
         <div class="table-responsive" id="tableScrollContainer" style="overflow-x: auto;">
             <table class="table table-striped">

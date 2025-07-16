@@ -71,7 +71,7 @@
 .btn-primary:focus {
   background-color: #091a38; /* Darker blue */
   border-color: #091a38;
-  color: #ffffff; /* Keep text white */
+  color: #ffffff; /*  text white */
   box-shadow: 0 0 12px 2px #091a38;
   outline: none;
   text-decoration: none;

@@ -41,7 +41,7 @@ def authView(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect("login")  # Assumes Django auth URLs are used
+            return redirect("login")  
     else:
         form = CustomUserCreationForm()
     return render(request, "registration/signup.html", {"form": form})
@@ -158,7 +158,7 @@ def generate_accession_number(request):
                     'warning_low_range': True,
                     'remaining_numbers': remaining,
                     'requested_numbers': requested,
-                    'remaining_to_generate': remaining_to_generate,   # <-- pass this!
+                    'remaining_to_generate': remaining_to_generate,   
                 })
 
 
@@ -326,7 +326,7 @@ def generate_new_range(request, collection_id):
     is_range_full = last_used_number >= collection.end_range
 
     if request.method == 'POST' and is_range_full:
-        block_size = 20  # adjust as needed
+        block_size = 20  
         last_global_end = Collection.objects.exclude(end_range__isnull=True).aggregate(
             Max('end_range'))['end_range__max'] or 0
 
